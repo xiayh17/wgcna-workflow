@@ -1,0 +1,236 @@
+---
+title: "FilterAndCpm-analysis"
+author: "xiayh17"
+date: "2021-07-03"
+output: workflowr::wflow_html
+editor_options:
+  chunk_output_type: console
+---
+
+## Load Data
+
+Eight files named start with PRJ were store in data/project.
+
+```{r}
+fs=list.files(path = 'data/project/',
+              pattern='PRJ',full.names = T,recursive = T)
+fs
+```
+
+Load one of them to make a test. It's a count data frame contains 74 samples start name with SSR and 27607 Genes named with ENSBTAG and number
+
+```{r}
+f=fs[1]
+load(f)
+pro=gsub('.Rdata','',basename(f))
+print(pro)
+colnames(cg_exp)[1:10]
+ncol(cg_exp)
+rownames(cg_exp)[1:10]
+nrow(cg_exp)
+```
+
+## Create input
+
+对Count数据进行预处理，主要是筛选和CPM的计算
+
+### 方案一
+
+cpm之后+1并且log, 然后用平均mad进行筛选
+
+```{r}
+## step 1 : create input 
+ct=cg_exp
+ct[1:4,1:4]
+ct=log(edgeR::cpm(ct)+1)
+ct[1:4,1:4]
+md=apply(ct,1,mad)
+boxplot(md) 
+datExpr = t( ct[md > mean(md)  ,])
+print(dim(datExpr))
+datExpr[1:4,1:4]
+```
+
+保留了大约百分之四十一的基因
+
+```{r}
+## check
+lcpm.cutoff <- 1
+nsamples <- nrow(datExpr)
+col <- rainbow(nsamples)
+plot(density(datExpr[1,]), lwd=2, ylim=c(0,0.25), las=2, main="", xlab="", col=col[1])
+title(main="A. md", xlab="Log-cpm+1")
+abline(v=lcpm.cutoff, lty=3)
+for (i in 2:nsamples){
+  den <- density(datExpr[i,])
+  lines(den$x, den$y, col=col[i], lwd=2)
+}
+```
+
+可以看一下不同表达量的基因分布情况 可以看到在0到1和3到4的地方形成了两个高峰，低表达位置的基因还是有大量保留
+
+### 方案二
+
+使用edgeR包中的[filterByExpr](https://rdrr.io/bioc/edgeR/man/filterByExpr.html)函数进行筛选之后cpm 此函数默认选取最小的组内的样本数量为最小样本数，保留至少在这个数量的样本中有10个或更多计数的基因。实际进行过滤时，使用的是CPM值而不是表达计数，以避免对总序列数大的样本的偏向性。
+
+比较麻烦的是需要分组数据，这里每个数据集的分组数据都不是统一的格式，勉强获取了分组信息的路径，但是具体哪一列，仍难不好确定
+
+```{r}
+library(fs)
+key <- gsub(".Rdata","",basename(f),perl = TRUE)
+test <- dir_info("data/all_for_wgcna", recurse = TRUE)
+patho <- grep(key,test$path)
+path <- test[patho,]$path
+```
+
+暂时通过人工确认，测试数据的分组信息可能在infection_status这一列
+
+```{r}
+gd <- read.delim(path)
+head(gd)
+group <- as.factor(gd$infection_status)
+keep.exprs <- edgeR::filterByExpr(cg_exp, group=group)
+cg_exp2 <- cg_exp[keep.exprs,] # 重新计算文库大小
+dim(cg_exp2)
+```
+
+筛选后保留了12952个基因，大约百分之四十七
+
+```{r}
+ct = cg_exp2
+ct=log(edgeR::cpm(ct)+1)
+ct[1:4,1:4]
+md=apply(ct,1,mad)
+boxplot(md) 
+datExpr2 = t( ct[md > mean(md)  ,])
+print(dim(datExpr2))
+datExpr2[1:4,1:4]
+```
+
+如果继续用md进一步筛选，基因数量只剩下4200，只有原来的15%
+
+可以看看现在的基因表达量分布情况
+
+```{r}
+lcpm.cutoff <- 1
+nsamples <- nrow(datExpr)
+col <- rainbow(nsamples)
+par(mfrow=c(1,2))
+plot(density(datExpr[1,]), lwd=2, ylim=c(0,0.25), las=2, main="", xlab="", col=col[1])
+title(main="A. md", xlab="Log-cpm+1")
+abline(v=lcpm.cutoff, lty=3)
+for (i in 2:nsamples){
+  den <- density(datExpr[i,])
+  lines(den$x, den$y, col=col[i], lwd=2)
+}
+plot(density(datExpr2[1,]), lwd=2, ylim=c(0,0.25), las=2, main="", xlab="", col=col[1])
+title(main="B. filterByExpr&md", xlab="Log-cpm+1")
+abline(v=lcpm.cutoff, lty=3)
+for (i in 2:nsamples){
+  den <- density(datExpr2[i,])
+  lines(den$x, den$y, col=col[i], lwd=2)
+}
+```
+
+### 方案三
+
+尽管表达量集中到了一处，但是高峰处的线明显比较分散，而且保留的基因较少
+
+有什么办法得到一个基因数量合适，并且各个样本的分布更一致呢？
+
+在前面的方案中，为了log的值不为0，我们先加了1。实际上cpm函数包含这一作用的参数`prior.count`，默认为2/L，称为弥补值，其中2是"预先计数"，而L是样本文库大小（以百万计）的平均值，所以log-CPM值是根据CPM值通过log~2~(CPM + 2/L)计算得到的。
+
+所以直接cpm(ct,log=T), 用他的弥补值试试
+
+```{r}
+ct = cg_exp2
+ct=edgeR::cpm(ct,log=T)
+ct[1:4,1:4]
+md=apply(ct,1,mad)
+par(mfrow=c(1,1))
+boxplot(md) 
+datExpr3 = t( ct[md > mean(md)  ,])
+print(dim(datExpr3))
+datExpr3[1:4,1:4]
+```
+
+此时我们只剩下了4573个
+
+```{r}
+lcpm.cutoff <- 1
+nsamples <- nrow(datExpr)
+col <- rainbow(nsamples)
+par(mfrow=c(1,3))
+plot(density(datExpr[1,]), lwd=2, ylim=c(0,0.25), las=2, main="", xlab="", col=col[1])
+title(main="A. md", xlab="Log-cpm + 1")
+abline(v=lcpm.cutoff, lty=3)
+for (i in 2:nsamples){
+  den <- density(datExpr[i,])
+  lines(den$x, den$y, col=col[i], lwd=2)
+}
+plot(density(datExpr2[1,]), lwd=2, ylim=c(0,0.25), las=2, main="", xlab="", col=col[1])
+title(main="B. filterByExpr&md", xlab="Log-cpm + 1")
+abline(v=lcpm.cutoff, lty=3)
+for (i in 2:nsamples){
+  den <- density(datExpr2[i,])
+  lines(den$x, den$y, col=col[i], lwd=2)
+}
+plot(density(datExpr3[1,]), lwd=2, ylim=c(0,0.25), las=2, main="", xlab="", col=col[1])
+title(main="C. filterByExpr&md", xlab="Log-cpm + 2/L")
+abline(v=lcpm.cutoff, lty=3)
+for (i in 2:nsamples){
+  den <- density(datExpr3[i,])
+  lines(den$x, den$y, col=col[i], lwd=2)
+}
+```
+
+这个结果看上去不太理想，相比方案二并没有好到哪里去
+
+### 方案四
+
+从上面的几番处理下来，得到的结果聚集到了一个很低的位置
+
+试试不要mad了，直接只使用[filterByExpr](https://rdrr.io/bioc/edgeR/man/filterByExpr.html)
+
+```{r}
+ct = cg_exp2
+datExpr4=edgeR::cpm(ct,log=T)
+```
+
+```{r}
+lcpm.cutoff <- 1
+nsamples <- nrow(datExpr)
+col <- rainbow(nsamples)
+par(mfrow=c(1,4))
+plot(density(datExpr[1,]), lwd=2, ylim=c(0,0.25), las=2, main="", xlab="", col=col[1])
+title(main="A. md", xlab="Log-cpm + 1")
+abline(v=lcpm.cutoff, lty=3)
+for (i in 2:nsamples){
+  den <- density(datExpr[i,])
+  lines(den$x, den$y, col=col[i], lwd=2)
+}
+plot(density(datExpr2[1,]), lwd=2, ylim=c(0,0.25), las=2, main="", xlab="", col=col[1])
+title(main="B. filterByExpr&md", xlab="Log-cpm + 1")
+abline(v=lcpm.cutoff, lty=3)
+for (i in 2:nsamples){
+  den <- density(datExpr2[i,])
+  lines(den$x, den$y, col=col[i], lwd=2)
+}
+plot(density(datExpr3[1,]), lwd=2, ylim=c(0,0.25), las=2, main="", xlab="", col=col[1])
+title(main="C. filterByExpr&md", xlab="Log-cpm + 2/L")
+abline(v=lcpm.cutoff, lty=3)
+for (i in 2:nsamples){
+  den <- density(datExpr3[i,])
+  lines(den$x, den$y, col=col[i], lwd=2)
+}
+nsamples <- ncol(datExpr4)
+plot(density(datExpr4[,1]), lwd=2,  ylim=c(0,0.25), las=2, main="", xlab="", col=col[1])
+title(main="A. Raw data", xlab="Log-cpm")
+abline(v=lcpm.cutoff, lty=3)
+for (i in 2:nsamples){
+  den <- density(datExpr4[,i])
+  lines(den$x, den$y, col=col[i], lwd=2)
+}
+```
+
+终于，看上去，相比之前，得到了一个相对好看的表达分布。

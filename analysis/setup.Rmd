@@ -1,0 +1,28 @@
+---
+title: "setup"
+author: "xiayh17"
+date: "2021-07-03"
+output: workflowr::wflow_html
+editor_options:
+  chunk_output_type: console
+---
+
+在不同平台，WGCNA的代码应该是没有很大差异的，但是要想获得出色的性能表现，不同平台 上应该有一些相应的设置。
+
+## Windows
+
+### R
+
+[Microsoft R](https://mran.microsoft.com/rro) 很好的加速了一些计算过程，目前主要支持Linux和Windows平台，使用方法和使用一个不同版本的R是一样的，Windows支持同时存在多个版本的R。
+
+下载链接：
+
+[Download . MRAN (microsoft.com)](https://mran.microsoft.com/download)
+
+## Linux
+
+### To Do
+
+## Mac
+
+### To Do
