@@ -1,0 +1,15 @@
+---
+title: "FindPower"
+author: "xiayh17"
+date: "2021-07-03"
+output: workflowr::wflow_html
+editor_options:
+  chunk_output_type: console
+---
+
+## Introduction
+
+```{r}
+
+```
+
