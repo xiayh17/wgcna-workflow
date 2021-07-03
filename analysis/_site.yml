@@ -1,17 +1,23 @@
-name: "wgcna-workflow"
+name: wgcna-workflow
 output_dir: ../docs
 navbar:
-  title: "wgcna-workflow"
+  title: wgcna-workflow
   left:
   - text: Home
     href: index.html
+  - text: Setup
+    href: setup.html
   - text: About
     href: about.html
   - text: License
     href: license.html
+  right:
+  - icon: fa-github
+    text: Source code
+    href: https://github.com/xiayh17/wgcna-workflow
 output:
   workflowr::wflow_html:
     toc: yes
     toc_float: yes
-    theme: cosmo
+    theme: sandstone
     highlight: textmate
