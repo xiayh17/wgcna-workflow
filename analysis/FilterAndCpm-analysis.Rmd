@@ -225,7 +225,7 @@ for (i in 2:nsamples){
 }
 nsamples <- ncol(datExpr4)
 plot(density(datExpr4[,1]), lwd=2,  ylim=c(0,0.25), las=2, main="", xlab="", col=col[1])
-title(main="A. Raw data", xlab="Log-cpm")
+title(main="D. filterByExpr", xlab="Log-cpm + 2/L")
 abline(v=lcpm.cutoff, lty=3)
 for (i in 2:nsamples){
   den <- density(datExpr4[,i])
