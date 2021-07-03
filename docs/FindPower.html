@@ -479,16 +479,16 @@ This reproducible <a href="http://rmarkdown.rstudio.com">R Markdown</a> analysis
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomxiayh17wgcnaworkflowtree42955dd3d0e8b9500d9ea9ae61a642dc73fd10d2targetblank42955dda"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Repository version:</strong> <a href="https://github.com/xiayh17/wgcna-workflow/tree/42955dd3d0e8b9500d9ea9ae61a642dc73fd10d2" target="_blank">42955dd</a> </a>
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomxiayh17wgcnaworkflowtreee65c5041f4a1bf46385ca01475e8d52a2e813a0ftargetblanke65c504a"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Repository version:</strong> <a href="https://github.com/xiayh17/wgcna-workflow/tree/e65c5041f4a1bf46385ca01475e8d52a2e813a0f" target="_blank">e65c504</a> </a>
 </p>
 </div>
-<div id="strongRepositoryversionstrongahrefhttpsgithubcomxiayh17wgcnaworkflowtree42955dd3d0e8b9500d9ea9ae61a642dc73fd10d2targetblank42955dda" class="panel-collapse collapse">
+<div id="strongRepositoryversionstrongahrefhttpsgithubcomxiayh17wgcnaworkflowtreee65c5041f4a1bf46385ca01475e8d52a2e813a0ftargetblanke65c504a" class="panel-collapse collapse">
 <div class="panel-body">
 <p>
 Great! You are using Git for version control. Tracking code development and connecting the code version to the results is critical for reproducibility.
 </p>
 <p>
-The results in this page were generated with repository version <a href="https://github.com/xiayh17/wgcna-workflow/tree/42955dd3d0e8b9500d9ea9ae61a642dc73fd10d2" target="_blank">42955dd</a>. See the <em>Past versions</em> tab to see a history of the changes made to the R Markdown and HTML files.
+The results in this page were generated with repository version <a href="https://github.com/xiayh17/wgcna-workflow/tree/e65c5041f4a1bf46385ca01475e8d52a2e813a0f" target="_blank">e65c504</a>. See the <em>Past versions</em> tab to see a history of the changes made to the R Markdown and HTML files.
 </p>
 <p>
 Note that you need to be careful to ensure that all relevant files for the analysis have been committed to Git prior to generating the results (you can use <code>wflow_publish</code> or <code>wflow_git_commit</code>). workflowr only checks the R Markdown file, but you know if there are other scripts or data files that it depends on. Below is the status of the Git repository when the results were generated:
@@ -498,6 +498,7 @@ Ignored files:
     Ignored:    .Rproj.user/
 
 Untracked files:
+    Untracked:  LICENSE
     Untracked:  data/all_for_wgcna/
     Untracked:  data/project/
 
@@ -547,6 +548,40 @@ Message
 Rmd
 </td>
 <td>
+<a href="https://github.com/xiayh17/wgcna-workflow/blob/e65c5041f4a1bf46385ca01475e8d52a2e813a0f/analysis/FindPower.Rmd" target="_blank">e65c504</a>
+</td>
+<td>
+xiayh17
+</td>
+<td>
+2021-07-03
+</td>
+<td>
+add findpower section for myproject
+</td>
+</tr>
+<tr>
+<td>
+html
+</td>
+<td>
+<a href="https://rawcdn.githack.com/xiayh17/wgcna-workflow/f603eba5c9af3790dc972138f5f1116420f52e1d/docs/FindPower.html" target="_blank">f603eba</a>
+</td>
+<td>
+xiayh17
+</td>
+<td>
+2021-07-03
+</td>
+<td>
+Build site.
+</td>
+</tr>
+<tr>
+<td>
+Rmd
+</td>
+<td>
 <a href="https://github.com/xiayh17/wgcna-workflow/blob/42955dd3d0e8b9500d9ea9ae61a642dc73fd10d2/analysis/FindPower.Rmd" target="_blank">42955dd</a>
 </td>
 <td>
@@ -566,8 +601,153 @@ Change theme for myproject
 </div>
 </div>
 </div>
-<div id="introduction" class="section level2">
-<h2>Introduction</h2>
+<div id="数据准备" class="section level2">
+<h2>数据准备</h2>
+<p>依据前面的探索<a href="FilterAndCpm-analysis.html">表达值筛选和cpm处理.</a>，我们使用方案四进行后续分析</p>
+<pre class="r"><code># load a test data
+fs=list.files(path = &#39;data/project/&#39;,
+              pattern=&#39;PRJ&#39;,full.names = T,recursive = T)
+f=fs[1]
+load(f)
+# get group info
+pro=gsub(&#39;.Rdata&#39;,&#39;&#39;,basename(f))
+library(fs)
+key &lt;- gsub(&quot;.Rdata&quot;,&quot;&quot;,basename(f),perl = TRUE)
+test &lt;- dir_info(&quot;data/all_for_wgcna&quot;, recurse = TRUE)
+patho &lt;- grep(key,test$path)
+path &lt;- test[patho,]$path
+gd &lt;- read.delim(path)
+group &lt;- as.factor(gd$infection_status)
+# filter with filterByExpr
+keep.exprs &lt;- edgeR::filterByExpr(cg_exp, group=group)
+cg_exp2 &lt;- cg_exp[keep.exprs,] # 重新计算文库大小
+ct &lt;- cg_exp2
+# cpm with log
+datExpr4 &lt;- edgeR::cpm(ct,log=T)
+datExpr4 &lt;- t(datExpr4)</code></pre>
+</div>
+<div id="wgcna-设置" class="section level2">
+<h2>WGCNA 设置</h2>
+<p>这一步涉及到使用WGCNA包，在Rstudio中运行WGCNA时，是无法激活WGCNA的并行加速度，官方教程中有细致的说明 <a href="https://horvath.genetics.ucla.edu/html/CoexpressionNetwork/Rpackages/WGCNA/Tutorials/">Tutorials for WGCNA R package</a>, 但是这个教程很久没更新了，在查找软阈值这一步，根据CPU的状态判断，Rstudio中设置后还是可以并行的</p>
+<p><a href="https://horvath.genetics.ucla.edu/html/CoexpressionNetwork/Rpackages/WGCNA/Tutorials/FemaleLiver-02-networkConstr-auto.pdf"><img src="https://cdn.jsdelivr.net/gh/xiayh17/Figs/imgs/20210703220706.png" title="WGCNA" alt="红线PDF文档的第一页" /></a></p>
+<pre class="r"><code># Load the WGCNA package
+library(WGCNA)</code></pre>
+<pre><code>Warning: 程辑包&#39;WGCNA&#39;是用R版本4.0.5 来建造的</code></pre>
+<pre><code>载入需要的程辑包：dynamicTreeCut</code></pre>
+<pre><code>Warning: 程辑包&#39;dynamicTreeCut&#39;是用R版本4.0.3 来建造的</code></pre>
+<pre><code>载入需要的程辑包：fastcluster</code></pre>
+<pre><code>Warning: 程辑包&#39;fastcluster&#39;是用R版本4.0.5 来建造的</code></pre>
+<pre><code>
+载入程辑包：&#39;fastcluster&#39;</code></pre>
+<pre><code>The following object is masked from &#39;package:stats&#39;:
+
+    hclust</code></pre>
+<pre><code>Warning: &#39;which&#39;存在多个方法表</code></pre>
+<pre><code></code></pre>
+<pre><code>
+载入程辑包：&#39;WGCNA&#39;</code></pre>
+<pre><code>The following object is masked from &#39;package:stats&#39;:
+
+    cor</code></pre>
+<pre class="r"><code># The following setting is important, do not omit.
+options(stringsAsFactors = FALSE);
+library(WGCNA)
+# Allow multi-threading within WGCNA. This helps speed up certain calculations.
+# At present this call is necessary for the code to work.
+# Any error here may be ignored but you may want to update WGCNA if you see one.
+# Caution: skip this line if you run RStudio or other third-party R environments.
+# See note above.
+enableWGCNAThreads()</code></pre>
+<pre><code>Allowing parallel execution with up to 7 working processes.</code></pre>
+</div>
+<div id="检测缺失值" class="section level2">
+<h2>检测缺失值</h2>
+<p>经过之前的处理，这一步一般都是没问题的 ，默认省略</p>
+<pre class="r"><code># gsg = goodSamplesGenes(datExpr4, verbose = 3)
+# gsg$allOK</code></pre>
+</div>
+<div id="一步选择软阈值" class="section level2">
+<h2>一步选择软阈值</h2>
+<p>这是教程中的模板代码，几乎通用</p>
+<pre class="r"><code># Choose a set of soft-thresholding powers
+powers = c(c(1:10), seq(from = 12, to=20, by=2))
+# Call the network topology analysis function
+sft = pickSoftThreshold(datExpr4, powerVector = powers, verbose = 5)</code></pre>
+<pre><code>pickSoftThreshold: will use block size 3454.
+ pickSoftThreshold: calculating connectivity for given powers...
+   ..working on genes 1 through 3454 of 12952
+   ..working on genes 3455 through 6908 of 12952
+   ..working on genes 6909 through 10362 of 12952
+   ..working on genes 10363 through 12952 of 12952
+   Power SFT.R.sq  slope truncated.R.sq mean.k. median.k. max.k.
+1      1   0.3730  1.720          0.985 3320.00  3230.000 5270.0
+2      2   0.0554 -0.302          0.919 1280.00  1160.000 2960.0
+3      3   0.5700 -1.040          0.930  606.00   498.000 1910.0
+4      4   0.7570 -1.420          0.933  324.00   237.000 1330.0
+5      5   0.8270 -1.570          0.949  189.00   122.000  980.0
+6      6   0.8550 -1.640          0.955  117.00    66.200  747.0
+7      7   0.8520 -1.700          0.949   76.50    37.800  584.0
+8      8   0.8480 -1.750          0.948   51.80    22.400  467.0
+9      9   0.8570 -1.760          0.955   36.30    13.800  380.0
+10    10   0.8430 -1.790          0.948   26.10     8.660  313.0
+11    12   0.8550 -1.790          0.961   14.30     3.620  221.0
+12    14   0.8360 -1.830          0.958    8.42     1.610  161.0
+13    16   0.8560 -1.800          0.974    5.22     0.763  120.0
+14    18   0.8620 -1.800          0.980    3.36     0.377   92.0
+15    20   0.8530 -1.820          0.982    2.25     0.193   71.7</code></pre>
+<pre class="r"><code># Plot the results:
+sizeGrWindow(9, 5)
+par(mfrow = c(1,2));
+cex1 = 0.85;
+# Scale-free topology fit index as a function of the soft-thresholding power
+plot(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
+     xlab=&quot;Soft Threshold (power)&quot;,ylab=&quot;Scale Free Topology Model Fit,signed R^2&quot;,type=&quot;n&quot;,
+     main = paste(&quot;Scale independence&quot;));
+text(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
+     labels=powers,cex=cex1,col=&quot;red&quot;);
+# this line corresponds to using an R^2 cut-off of h
+abline(h=0.90,col=&quot;red&quot;)
+# Mean connectivity as a function of the soft-thresholding power
+plot(sft$fitIndices[,1], sft$fitIndices[,5],
+     xlab=&quot;Soft Threshold (power)&quot;,ylab=&quot;Mean Connectivity&quot;, type=&quot;n&quot;,
+     main = paste(&quot;Mean connectivity&quot;))
+text(sft$fitIndices[,1], sft$fitIndices[,5], labels=powers, cex=cex1,col=&quot;red&quot;)</code></pre>
+<p>pickSoftThreshold函数中的RsquaredCut 参数是最小无标度拓扑拟合指数 R^2，也就是纵轴，数值越高，网络越符合无标度特征 (non-scale)，达到这个值的最小的power将会被选中，也有可能一直达不到，默认是0.85.</p>
+<p>我们可以这样提取出来</p>
+<pre class="r"><code>sft$powerEstimate</code></pre>
+<pre><code>[1] 6</code></pre>
+<p>如果一直达不到怎么办呢？这个问题在WGCNA的FAQ里有提到，详情可以去看看<a href="https://horvath.genetics.ucla.edu/html/CoexpressionNetwork/Rpackages/WGCNA/faq.html">WGCNA package: Frequently Asked Questions (ucla.edu)</a> 结论如下</p>
+<table>
+<thead>
+<tr class="header">
+<th><strong>Number of samples</strong></th>
+<th><strong>Unsigned and signed hybrid networks</strong></th>
+<th><strong>Signed networks</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Less than 20</td>
+<td>9</td>
+<td>18</td>
+</tr>
+<tr class="even">
+<td>20-30</td>
+<td>8</td>
+<td>16</td>
+</tr>
+<tr class="odd">
+<td>30-40</td>
+<td>7</td>
+<td>14</td>
+</tr>
+<tr class="even">
+<td>more than 40</td>
+<td>6</td>
+<td>12</td>
+</tr>
+</tbody>
+</table>
 <br>
 <p>
 <button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
@@ -593,18 +773,42 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
-[1] workflowr_1.6.2
+[1] WGCNA_1.70-3          fastcluster_1.2.3     dynamicTreeCut_1.63-1
+[4] fs_1.5.0              workflowr_1.6.2      
 
 loaded via a namespace (and not attached):
- [1] Rcpp_1.0.6        whisker_0.4       knitr_1.33        magrittr_2.0.1   
- [5] R6_2.5.0          rlang_0.4.11      fansi_0.5.0       stringr_1.4.0    
- [9] tools_4.0.2       xfun_0.24         utf8_1.2.1        git2r_0.28.0     
-[13] jquerylib_0.1.4   htmltools_0.5.1.1 ellipsis_0.3.2    rprojroot_2.0.2  
-[17] yaml_2.2.1        digest_0.6.27     tibble_3.1.2      lifecycle_1.0.0  
-[21] crayon_1.4.1      later_1.2.0       sass_0.4.0        vctrs_0.3.8      
-[25] promises_1.2.0.1  fs_1.5.0          glue_1.4.2        evaluate_0.14    
-[29] rmarkdown_2.9     stringi_1.5.3     bslib_0.2.5.1     compiler_4.0.2   
-[33] pillar_1.6.1      jsonlite_1.7.2    httpuv_1.6.1      pkgconfig_2.0.3  </code></pre>
+ [1] Biobase_2.50.0        sass_0.4.0            edgeR_3.30.3         
+ [4] bit64_4.0.5           jsonlite_1.7.2        splines_4.0.2        
+ [7] foreach_1.5.1         bslib_0.2.5.1         Formula_1.2-4        
+[10] assertthat_0.2.1      stats4_4.0.2          latticeExtra_0.6-29  
+[13] blob_1.2.1            impute_1.62.0         yaml_2.2.1           
+[16] backports_1.2.1       pillar_1.6.1          RSQLite_2.2.7        
+[19] lattice_0.20-41       glue_1.4.2            limma_3.46.0         
+[22] digest_0.6.27         checkmate_2.0.0       RColorBrewer_1.1-2   
+[25] promises_1.2.0.1      colorspace_2.0-1      preprocessCore_1.50.0
+[28] htmltools_0.5.1.1     httpuv_1.6.1          Matrix_1.3-4         
+[31] pkgconfig_2.0.3       purrr_0.3.4           GO.db_3.11.4         
+[34] scales_1.1.1          whisker_0.4           jpeg_0.1-8.1         
+[37] later_1.2.0           htmlTable_2.2.1       git2r_0.28.0         
+[40] tibble_3.1.2          generics_0.1.0        IRanges_2.22.2       
+[43] ggplot2_3.3.5         ellipsis_0.3.2        cachem_1.0.5         
+[46] nnet_7.3-14           BiocGenerics_0.36.0   survival_3.2-11      
+[49] magrittr_2.0.1        crayon_1.4.1          memoise_2.0.0        
+[52] evaluate_0.14         fansi_0.5.0           doParallel_1.0.16    
+[55] foreign_0.8-80        data.table_1.14.0     tools_4.0.2          
+[58] lifecycle_1.0.0       matrixStats_0.59.0    stringr_1.4.0        
+[61] S4Vectors_0.26.1      munsell_0.5.0         locfit_1.5-9.4       
+[64] cluster_2.1.0         AnnotationDbi_1.50.3  compiler_4.0.2       
+[67] jquerylib_0.1.4       rlang_0.4.11          grid_4.0.2           
+[70] rstudioapi_0.13       iterators_1.0.13      htmlwidgets_1.5.3    
+[73] base64enc_0.1-3       rmarkdown_2.9         gtable_0.3.0         
+[76] codetools_0.2-16      DBI_1.1.1             R6_2.5.0             
+[79] gridExtra_2.3         knitr_1.33            dplyr_1.0.7          
+[82] fastmap_1.1.0         bit_4.0.4             utf8_1.2.1           
+[85] Hmisc_4.5-0           rprojroot_2.0.2       stringi_1.5.3        
+[88] parallel_4.0.2        Rcpp_1.0.6            rpart_4.1-15         
+[91] vctrs_0.3.8           png_0.1-7             tidyselect_1.1.1     
+[94] xfun_0.24            </code></pre>
 </div>
 </div>
 
