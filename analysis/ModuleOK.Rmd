@@ -1,0 +1,20 @@
+---
+title: "ModuleOK"
+author: "xiayh17"
+date: "2021-07-03"
+output: workflowr::wflow_html
+editor_options:
+  chunk_output_type: console
+---
+
+## 网络构建和模块检测
+```{r}
+# net = blockwiseModules(datExpr, power = 6,
+# TOMType = "unsigned", minModuleSize = 30,
+# reassignThreshold = 0, mergeCutHeight = 0.25,
+# numericLabels = TRUE, pamRespectsDendro = FALSE,
+# saveTOMs = TRUE,
+# saveTOMFileBase = "femaleMouseTOM",
+# verbose = 3)
+```
+

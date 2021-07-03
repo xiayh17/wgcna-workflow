@@ -7,9 +7,105 @@ editor_options:
   chunk_output_type: console
 ---
 
-## Introduction
+## 数据准备
+
+依据前面的探索[表达值筛选和cpm处理.](FilterAndCpm-analysis.html)，我们使用方案四进行后续分析
 
 ```{r}
-
+# load a test data
+fs=list.files(path = 'data/project/',
+              pattern='PRJ',full.names = T,recursive = T)
+f=fs[1]
+load(f)
+# get group info
+pro=gsub('.Rdata','',basename(f))
+library(fs)
+key <- gsub(".Rdata","",basename(f),perl = TRUE)
+test <- dir_info("data/all_for_wgcna", recurse = TRUE)
+patho <- grep(key,test$path)
+path <- test[patho,]$path
+gd <- read.delim(path)
+group <- as.factor(gd$infection_status)
+# filter with filterByExpr
+keep.exprs <- edgeR::filterByExpr(cg_exp, group=group)
+cg_exp2 <- cg_exp[keep.exprs,] # 重新计算文库大小
+ct <- cg_exp2
+# cpm with log
+datExpr4 <- edgeR::cpm(ct,log=T)
+datExpr4 <- t(datExpr4)
 ```
 
+## WGCNA 设置
+
+这一步涉及到使用WGCNA包，在Rstudio中运行WGCNA时，是无法激活WGCNA的并行加速度，官方教程中有细致的说明 [Tutorials for WGCNA R package](https://horvath.genetics.ucla.edu/html/CoexpressionNetwork/Rpackages/WGCNA/Tutorials/), 但是这个教程很久没更新了，在查找软阈值这一步，根据CPU的状态判断，Rstudio中设置后还是可以并行的
+
+[![红线PDF文档的第一页](https://cdn.jsdelivr.net/gh/xiayh17/Figs/imgs/20210703220706.png "WGCNA")](https://horvath.genetics.ucla.edu/html/CoexpressionNetwork/Rpackages/WGCNA/Tutorials/FemaleLiver-02-networkConstr-auto.pdf)
+
+```{r}
+# Load the WGCNA package
+library(WGCNA)
+# The following setting is important, do not omit.
+options(stringsAsFactors = FALSE);
+library(WGCNA)
+# Allow multi-threading within WGCNA. This helps speed up certain calculations.
+# At present this call is necessary for the code to work.
+# Any error here may be ignored but you may want to update WGCNA if you see one.
+# Caution: skip this line if you run RStudio or other third-party R environments.
+# See note above.
+enableWGCNAThreads()
+```
+
+## 检测缺失值
+
+经过之前的处理，这一步一般都是没问题的 ，默认省略
+
+```{r}
+# gsg = goodSamplesGenes(datExpr4, verbose = 3)
+# gsg$allOK
+```
+
+## 一步选择软阈值
+
+这是教程中的模板代码，几乎通用
+
+```{r}
+# Choose a set of soft-thresholding powers
+powers = c(c(1:10), seq(from = 12, to=20, by=2))
+# Call the network topology analysis function
+sft = pickSoftThreshold(datExpr4, powerVector = powers, verbose = 5)
+# Plot the results:
+sizeGrWindow(9, 5)
+par(mfrow = c(1,2));
+cex1 = 0.85;
+# Scale-free topology fit index as a function of the soft-thresholding power
+plot(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
+     xlab="Soft Threshold (power)",ylab="Scale Free Topology Model Fit,signed R^2",type="n",
+     main = paste("Scale independence"));
+text(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
+     labels=powers,cex=cex1,col="red");
+# this line corresponds to using an R^2 cut-off of h
+abline(h=0.90,col="red")
+# Mean connectivity as a function of the soft-thresholding power
+plot(sft$fitIndices[,1], sft$fitIndices[,5],
+     xlab="Soft Threshold (power)",ylab="Mean Connectivity", type="n",
+     main = paste("Mean connectivity"))
+text(sft$fitIndices[,1], sft$fitIndices[,5], labels=powers, cex=cex1,col="red")
+```
+
+pickSoftThreshold函数中的RsquaredCut 参数是最小无标度拓扑拟合指数 R\^2，也就是纵轴，数值越高，网络越符合无标度特征 (non-scale)，达到这个值的最小的power将会被选中，也有可能一直达不到，默认是0.85.
+
+我们可以这样提取出来
+
+```{r}
+sft$powerEstimate
+```
+
+如果一直达不到怎么办呢？这个问题在WGCNA的FAQ里有提到，详情可以去看看[WGCNA package: Frequently Asked Questions (ucla.edu)](https://horvath.genetics.ucla.edu/html/CoexpressionNetwork/Rpackages/WGCNA/faq.html)
+结论如下
+
+| **Number of samples** | **Unsigned and signed hybrid networks** | **Signed networks** |
+|-----------------------|-----------------------------------------|---------------------|
+| Less than 20          | 9                                       | 18                  |
+| 20-30                 | 8                                       | 16                  |
+| 30-40                 | 7                                       | 14                  |
+| more than 40          | 6                                       | 12                  |

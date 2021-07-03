@@ -26,3 +26,5 @@ into webpages.
 2. [寻找软阈值.](FindPower.html)
 
 3. [我的模块分的还好吗?](ModuleOK.html)
+
+4. [批量化.](batch.html)
