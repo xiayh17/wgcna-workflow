@@ -479,16 +479,16 @@ This reproducible <a href="http://rmarkdown.rstudio.com">R Markdown</a> analysis
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomxiayh17wgcnaworkflowtreee65c5041f4a1bf46385ca01475e8d52a2e813a0ftargetblanke65c504a"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Repository version:</strong> <a href="https://github.com/xiayh17/wgcna-workflow/tree/e65c5041f4a1bf46385ca01475e8d52a2e813a0f" target="_blank">e65c504</a> </a>
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomxiayh17wgcnaworkflowtreeeafa41143d73d3d0556a52697289b2e6e8de0327targetblankeafa411a"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Repository version:</strong> <a href="https://github.com/xiayh17/wgcna-workflow/tree/eafa41143d73d3d0556a52697289b2e6e8de0327" target="_blank">eafa411</a> </a>
 </p>
 </div>
-<div id="strongRepositoryversionstrongahrefhttpsgithubcomxiayh17wgcnaworkflowtreee65c5041f4a1bf46385ca01475e8d52a2e813a0ftargetblanke65c504a" class="panel-collapse collapse">
+<div id="strongRepositoryversionstrongahrefhttpsgithubcomxiayh17wgcnaworkflowtreeeafa41143d73d3d0556a52697289b2e6e8de0327targetblankeafa411a" class="panel-collapse collapse">
 <div class="panel-body">
 <p>
 Great! You are using Git for version control. Tracking code development and connecting the code version to the results is critical for reproducibility.
 </p>
 <p>
-The results in this page were generated with repository version <a href="https://github.com/xiayh17/wgcna-workflow/tree/e65c5041f4a1bf46385ca01475e8d52a2e813a0f" target="_blank">e65c504</a>. See the <em>Past versions</em> tab to see a history of the changes made to the R Markdown and HTML files.
+The results in this page were generated with repository version <a href="https://github.com/xiayh17/wgcna-workflow/tree/eafa41143d73d3d0556a52697289b2e6e8de0327" target="_blank">eafa411</a>. See the <em>Past versions</em> tab to see a history of the changes made to the R Markdown and HTML files.
 </p>
 <p>
 Note that you need to be careful to ensure that all relevant files for the analysis have been committed to Git prior to generating the results (you can use <code>wflow_publish</code> or <code>wflow_git_commit</code>). workflowr only checks the R Markdown file, but you know if there are other scripts or data files that it depends on. Below is the status of the Git repository when the results were generated:
@@ -543,6 +543,40 @@ Message
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/xiayh17/wgcna-workflow/blob/eafa41143d73d3d0556a52697289b2e6e8de0327/analysis/FilterAndCpm-analysis.Rmd" target="_blank">eafa411</a>
+</td>
+<td>
+xiayh17
+</td>
+<td>
+2021-07-03
+</td>
+<td>
+Fix title of Figure for myproject
+</td>
+</tr>
+<tr>
+<td>
+html
+</td>
+<td>
+<a href="https://rawcdn.githack.com/xiayh17/wgcna-workflow/c418b29133bd8c370f155e0c9ec96d78947f1c84/docs/FilterAndCpm-analysis.html" target="_blank">c418b29</a>
+</td>
+<td>
+xiayh17
+</td>
+<td>
+2021-07-03
+</td>
+<td>
+Build site.
+</td>
+</tr>
 <tr>
 <td>
 html
@@ -866,7 +900,7 @@ for (i in 2:nsamples){
 }
 nsamples &lt;- ncol(datExpr4)
 plot(density(datExpr4[,1]), lwd=2,  ylim=c(0,0.25), las=2, main=&quot;&quot;, xlab=&quot;&quot;, col=col[1])
-title(main=&quot;A. Raw data&quot;, xlab=&quot;Log-cpm&quot;)
+title(main=&quot;D. filterByExpr&quot;, xlab=&quot;Log-cpm + 2/L&quot;)
 abline(v=lcpm.cutoff, lty=3)
 for (i in 2:nsamples){
   den &lt;- density(datExpr4[,i])
