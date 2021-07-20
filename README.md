@@ -1,4 +1,4 @@
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/xiayh17/wgcna-workflow/HEAD)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/xiayh17/wgcna-workflow/HEAD?urlpath=rstudio)
 # wgcna-workflow
 
 A [workflowr][] project.
